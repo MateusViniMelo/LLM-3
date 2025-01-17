@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+  
+    networks:
+      - qdrant_network  # Nome da rede
+
+  
+    
+
+volumes:
+  qdrant_data:
+
+networks:
+  qdrant_network:
+    driver: bridge  # Usando a rede bridge, que é a rede padrão do Docker
