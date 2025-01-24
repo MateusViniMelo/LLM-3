@@ -7,7 +7,7 @@ Este projeto é um assistente inteligente que utiliza uma coleção de documento
 Antes de rodar o projeto, é necessário garantir que você tenha as seguintes ferramentas instaladas:
 
 - **Docker**: Utilizado para o gerenciamento de containers e serviços.
-- **Python 3.13** ou superior: Versão do Python utilizada no projeto.
+- **Python 3.12** ou superior: Versão do Python utilizada no projeto.
 - **Ollama** com o modelo `llama3`: Serviço responsável por gerar as respostas baseadas nos prompts fornecidos.
 
 ### Como Rodar o Projeto
@@ -19,7 +19,7 @@ docker compose up -d
 ```
 3. Instalar as dependências do Python com os comandos:
 ```bash
-python3.13 -m venv venv
+python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
