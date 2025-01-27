@@ -7,11 +7,11 @@ from services.ollama_service import OllamaService
 
 class Application:
     def __init__(
-        self, 
-        loader: DocumentLoader, 
-        embedder: EmbeddingModel, 
-        repository: QdrantRepository, 
-        prompt_generator: PromptGenerator, 
+        self,
+        loader: DocumentLoader,
+        embedder: EmbeddingModel,
+        repository: QdrantRepository,
+        prompt_generator: PromptGenerator,
         ollama_service: OllamaService
     ):
         self.loader = loader
@@ -21,12 +21,12 @@ class Application:
         self.ollama_service = ollama_service
 
     def run(self) -> None:
-        documentos = self.loader.load_documents()
-        if not documentos:
+        documents = self.loader.load_documents()
+        if not documents:
             return
 
         self.repository.create_collection_if_not_exists(vector_size=384)
-        self.repository.upsert_documents(documentos, self.embedder)
+        self.repository.upsert_documents(documents, self.embedder)
 
         while True:
             query = input("Digite sua pergunta (ou 'sair' para finalizar): ")
@@ -41,6 +41,6 @@ class Application:
             response = self.ollama_service.query(prompt)
 
             if response:
-                print("Resposta final:", response)
+                print("\nResposta gerada:", response)
             else:
-                print("Não foi possível gerar uma resposta.")
+                print("\nNão foi possível gerar uma resposta.")
