@@ -1,24 +1,89 @@
-import os
-from models.document_loader import DocumentLoader
-from models.embedding_model import EmbeddingModel
-from repositories.qdrant_repository import QdrantRepository
-from models.prompt_generator import PromptGenerator
-from services.ollama_service import OllamaService
-from services.application_service import Application
+from torch import cuda, bfloat16
+import transformers
+from langchain.chains.retrieval_qa.base import RetrievalQA
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
+from chromadb.utils.embedding_functions.ollama_embedding_function import OllamaEmbeddingFunction
+from qdrant_client import QdrantClient
+from langchain_huggingface.llms.huggingface_pipeline import HuggingFacePipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import argparse
+from huggingface_hub import login
+
+
+def main(hf_auth, persist_directory, query):
+    # Load embedding model
+    embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L12-v2")
+
+    # Load the existing vector database
+    vectordb = OllamaEmbeddingFunction(
+        url="http://localhost:11434",
+        model_name="llama2",
+    )
+
+    model_id = "meta-llama/Llama-2-13b-hf"
+
+    device = f'cuda:{cuda.current_device()}' if cuda.is_available() else 'cpu'
+
+    # Set quantization configuration to load large model with less GPU memory
+    bnb_config = transformers.BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type='nf4',
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_compute_dtype=bfloat16
+    )
+
+    model_config = transformers.AutoConfig.from_pretrained(
+        model_id,
+        use_auth_token=hf_auth
+    )
+
+    model = transformers.AutoModelForCausalLM.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        config=model_config,
+        quantization_config=bnb_config,
+        device_map='auto',
+        use_auth_token=hf_auth
+    )
+    model.eval()
+
+    tokenizer = transformers.AutoTokenizer.from_pretrained(
+        model_id,
+        use_auth_token=hf_auth
+    )
+
+    generate_text = transformers.pipeline(
+        model=model,
+        tokenizer=tokenizer,
+        return_full_text=False,  # langchain expects the full text
+        task='text-generation',
+        temperature=0.1,  # 'randomness' of outputs, 0.0 is the min and 1.0 the max
+        max_new_tokens=40,  # max number of tokens to generate in the output
+        repetition_penalty=1.1  # without this output begins repeating
+    )
+
+    llm = HuggingFacePipeline(pipeline=generate_text)
+
+    retriever = vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+
+    QnA = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=retriever,
+        # chain_type_kwargs=chain_type_kwargs, # If you want to customize prompt, see example in custom_prompt.py
+        return_source_documents=True
+    )
+
+    llm_response = QnA(query)
+    print(llm_response)
 
 
 if __name__ == "__main__":
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(base_dir, 'documentos.json')
+    parser = argparse.ArgumentParser(description="Run the main script with arguments.")
+    parser.add_argument("--hf_auth", type=str, required=True, help="Hugging Face authentication token.")
+    parser.add_argument("--persist_directory", type=str, required=True, help="Path to directory for vector database.")
+    parser.add_argument("--query", type=str, required=True, help="Query for the language model.")
 
-    loader = DocumentLoader(json_path)
-    embedder = EmbeddingModel()
-    repository = QdrantRepository(
-        host="localhost", port=6333, collection_name="documents_switch")
-    prompt_generator = PromptGenerator()
-    ollama_service = OllamaService(
-        api_url="http://localhost:11434/api/generate")
-
-    app = Application(loader, embedder, repository,
-                      prompt_generator, ollama_service)
-    app.run()
+    args = parser.parse_args()
+    main(args.hf_auth, args.persist_directory, args.query)
