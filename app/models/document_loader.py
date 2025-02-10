@@ -1,6 +1,7 @@
 import json
 from typing import List, Dict
 
+
 class DocumentLoader:
     def __init__(self, json_path: str):
         self.json_path = json_path
@@ -8,12 +9,11 @@ class DocumentLoader:
     def load_documents(self) -> List[Dict[str, str]]:
         try:
             with open(self.json_path, 'r', encoding='utf-8') as file:
-                documentos = json.load(file)
-
-                if not isinstance(documentos, list) or not all('pergunta' in doc and 'resposta' in doc for doc in documentos):
-                    raise ValueError("O arquivo JSON deve ser uma lista de objetos com as chaves 'pergunta' e 'resposta'.")
-
-                return documentos
+                documents = json.load(file)
+                if not isinstance(documents, list) or not all('pergunta' in doc and 'resposta' in doc for doc in documents):
+                    raise ValueError(
+                        "O arquivo JSON deve ser uma lista de objetos com as chaves 'pergunta' e 'resposta'.")
+                return documents
         except FileNotFoundError:
             print("Erro: O arquivo JSON não foi encontrado.")
             return []

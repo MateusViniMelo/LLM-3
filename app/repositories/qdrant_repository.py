@@ -3,6 +3,7 @@ from qdrant_client.models import PointStruct
 from typing import List, Dict
 from models.embedding_model import EmbeddingModel
 
+
 class QdrantRepository:
     def __init__(self, host: str, port: int, collection_name: str):
         self.client = QdrantClient(f"http://{host}:{port}")
@@ -16,12 +17,19 @@ class QdrantRepository:
             )
 
     def upsert_documents(self, documents: List[Dict[str, str]], embedder: EmbeddingModel) -> None:
+        points = []
         for i, doc in enumerate(documents):
             embedding = embedder.encode(doc["resposta"])
-            point = PointStruct(
-                id=i, vector=embedding, payload={"pergunta": doc["pergunta"], "resposta": doc["resposta"]}
-            )
-            self.client.upsert(collection_name=self.collection_name, points=[point])
+            points.append(PointStruct(
+                id=i,
+                vector=embedding,
+                payload={"pergunta": doc["pergunta"],
+                         "resposta": doc["resposta"]}
+            ))
+        self.client.upsert(
+            collection_name=self.collection_name,
+            points=points
+        )
 
     def search(self, query_vector: List[float], k: int = 3) -> List[Dict[str, str]]:
         search_result = self.client.search(

@@ -1,10 +1,14 @@
-from typing import List, Dict
+from typing import Dict, List
+
 
 class PromptGenerator:
     @staticmethod
     def create_prompt(documents: List[Dict[str, str]], query: str) -> str:
+        if not documents:
+            return f"Não foi possível encontrar informações relevantes para a pergunta: {query}"
+
         template = """
-        Você é um assistente que responde com base nos seguintes documentos:
+        Considere o seguinte documento ao responder à pergunta. Não tente inventar uma resposta:
         {documents}
 
         Pergunta do usuário: {query}
@@ -12,5 +16,8 @@ class PromptGenerator:
         Resposta:
         """
         return template.format(
-            documents="\n".join([f"P: {doc['pergunta']}\nR: {doc['resposta']}" for doc in documents]), query=query
+            documents="\n".join([f"P: {doc['pergunta']}\nR: {
+                                doc['resposta']}" for doc in documents]),
+            query=query
+
         )

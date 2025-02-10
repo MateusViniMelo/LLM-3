@@ -1,6 +1,7 @@
 import requests
 from typing import Optional
 
+
 class OllamaService:
     def __init__(self, api_url: str):
         self.api_url = api_url
@@ -14,3 +15,4 @@ class OllamaService:
             return response.json().get("response")
         else:
             print(f"Erro ao consultar o Ollama: {response.text}")
+            return None
