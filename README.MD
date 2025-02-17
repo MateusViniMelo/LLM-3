@@ -15,29 +15,35 @@ Este projeto implementa uma funcionalidade de **Retrieval-Augmented Generation (
 Antes de rodar o projeto, é necessário garantir que você tenha as seguintes ferramentas instaladas:
 
 - **Docker**: Utilizado para o gerenciamento de containers e serviços.
-- **Python 3.12** ou superior: Versão do Python utilizada no projeto.
 - **Ollama** com o modelo `llama3`: Serviço responsável por gerar as respostas baseadas nos prompts fornecidos.
 
 ### Como Rodar o Projeto
 
+#### Python e Qdrant no Docker
+
 1. Clonar o repositório
-2. Suba o container o Qdrant que é o banco de dados vetorial com o comando:
+2. Crie um arquivo **.env** na raiz do projeto e copie tudo o que está no **.env.example** para ele
+3. Suba o container do projeto que tem o Qdrant e o Pyhton 3.12:
 
 ```bash
 docker compose up -d
 ```
 
-3. Instalar as dependências do Python com os comandos:
+4. Entre no container que tem o
 
 ```bash
-python -m venv venv
-source venv/bin/activate
+docker exec -it python_app bash
+```
+
+4. Instale as dependências do Projeto:
+
+```bash
 pip install -r requirements.txt
 ```
 
-4. Execute a aplicação e faça as perguntas:
+5. Execute a aplicação e faça a pergunta:
 
-```bash
+```
 python app/main.py
 ```
 

@@ -36,7 +36,6 @@ dist/
 
 # Arquivos de configuração privados
 .env
-.env.*
 *.key
 *.pem
 

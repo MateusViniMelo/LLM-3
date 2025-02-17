@@ -10,6 +10,9 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     command: tail -f /dev/null
+    networks:
+      - qdrant_network  # Adicionado à mesma rede do Qdrant
+
   qdrant:
     image: qdrant/qdrant
     container_name: qdrant
@@ -17,13 +20,12 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
-
     networks:
-      - qdrant_network # Nome da rede
+      - qdrant_network  # Mantido na mesma rede
 
 volumes:
   qdrant_data:
 
 networks:
   qdrant_network:
-    driver: bridge # Usando a rede bridge, que é a rede padrão do Docker
+    driver: bridge  # Usando a rede bridge

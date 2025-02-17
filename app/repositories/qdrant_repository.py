@@ -2,6 +2,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 from typing import List, Dict
 from models.embedding_model import EmbeddingModel
+import uuid
 
 
 class QdrantRepository:
@@ -17,15 +18,14 @@ class QdrantRepository:
             )
 
     def upsert_documents(self, documents: List[Dict[str, str]], embedder: EmbeddingModel) -> None:
-        points = []
-        for i, doc in enumerate(documents):
-            embedding = embedder.encode(doc["resposta"])
-            points.append(PointStruct(
-                id=i,
-                vector=embedding,
-                payload={"pergunta": doc["pergunta"],
-                         "resposta": doc["resposta"]}
-            ))
+        points = [
+            PointStruct(
+                id=str(uuid.uuid4()),  # Usando UUID para evitar conflitos de ID
+                vector=embedder.encode(doc["resposta"]),
+                payload={"pergunta": doc["pergunta"], "resposta": doc["resposta"]}
+            )
+            for doc in documents
+        ]
         self.client.upsert(
             collection_name=self.collection_name,
             points=points
@@ -40,7 +40,8 @@ class QdrantRepository:
         return [
             {
                 "pergunta": doc.payload.get("pergunta", "Pergunta não encontrada"),
-                "resposta": doc.payload["resposta"]
+                "resposta": doc.payload.get("resposta", "Resposta não encontrada"),
+                "score": doc.score  # Retornando o score da similaridade
             }
             for doc in search_result
         ]
